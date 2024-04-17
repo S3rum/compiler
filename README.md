@@ -1,3 +1,7 @@
+Compiler in Python for C like code
+
+grammar:
+
 startRule
 : def_main_part
 ;
