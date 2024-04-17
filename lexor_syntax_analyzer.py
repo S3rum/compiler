@@ -11,21 +11,20 @@ class Token:
         self.token_number = token_number
 
 
-filepath = input("Give me the file's path: ")
-with open(filepath, "r") as fd:
-    text = fd.read()  # Read the file contents
-
-
 class Lexer:
-    def __init__(self,):
-        global text
-        self.text = text
+    def __init__(self):
+        self.text = self.filepath()
         self.pos = 0  # Current position in given file
         self.prev_char = self.text[self.pos - 1]
         self.current_char = self.text[self.pos]
         self.next_char = self.text[self.pos + 1]
         self.token_number = 0
         self.current_line = 1
+
+    def filepath(self):
+        filepath = input("Give me the file's path: ")
+        with open(filepath, "r") as fd:
+            return fd.read()  # Read the file contents
 
     def _get_id(self):  # Find identifiers
         result = ""
@@ -261,7 +260,7 @@ class Parser:
         self.lexer = lexer
         self.currentToken = self.lexer.lexical_analyzer()
         self.nextToken = self.lexer.lexical_analyzer()
-        self.def_loop()
+        self.looper()
 
     def def_main_function(self):
         if self.currentToken.family == "KEYWORD" and self.currentToken.recognized_string == "#def":
@@ -279,7 +278,7 @@ class Parser:
                                 self.nextToken.line_number)
             self.declaration_line()
 
-    def def_loop(self):
+    def looper(self):
         self.declarations()
         while self.currentToken.recognized_string == "def":
             self.def_function()
@@ -554,6 +553,33 @@ class Parser:
         self.currentToken = self.nextToken
         self.nextToken = self.lexer.lexical_analyzer()
         return self.currentToken
+
+
+class Quad:
+
+  def __init__(self, op, arg1, arg2, result):
+    """
+    Initializes a Quad object.
+
+    Args:
+      op: The operation of the quad (e.g., "+", "*").
+      arg1: The first operand (can be a variable name, constant, or None).
+      arg2: The second operand (can be a variable name, constant, or None).
+      result: The variable where the result is stored.
+    """
+    self.op = op
+    self.arg1 = arg1
+    self.arg2 = arg2
+    self.result = result
+
+  def __str__(self):
+    """
+    Returns a string representation of the quad in a human-readable format.
+    """
+    if self.arg2 is None:
+      return f"{self.result} = {self.op} {self.arg1}"
+    else:
+      return f"{self.result} = {self.arg1} {self.op} {self.arg2}"
 
 
 def main():
