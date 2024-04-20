@@ -582,6 +582,13 @@ class Quad:
       return f"{self.result} = {self.arg1} {self.op} {self.arg2}"
 
 
+def genquad(op, x, y, z):
+    return Quad(op, x, y, z)
+
+
+def newtemp():
+    re
+
 def main():
 
     tokens = []
