@@ -250,7 +250,7 @@ class Lexer:
                 if token_str == "def":
                     return Token("KEYWORD", "#" + token_str, self.current_line, self.token_number)
             else:
-                print("Unexpected token in line: ",self.current_line)
+                print("Unexpected token in line: ", self.current_line)
                 sys.exit()
 
 
@@ -554,40 +554,209 @@ class Parser:
         self.nextToken = self.lexer.lexical_analyzer()
         return self.currentToken
 
+label = 1
+temp_var_num = 1  # temporary variable counter.
+all_quads = {}
+main_program_declared_vars = []
+symbol_table = []
+current_subprogram = []
 
-class Quad:
 
-  def __init__(self, op, arg1, arg2, result):
-    """
-    Initializes a Quad object.
+def newTemp():
+    # T_1, T_2, ..., T_n
+    global temp_var_num
+    new_tempID = "T_" + str(temp_var_num)
+    temp_var_num += 1
 
-    Args:
-      op: The operation of the quad (e.g., "+", "*").
-      arg1: The first operand (can be a variable name, constant, or None).
-      arg2: The second operand (can be a variable name, constant, or None).
-      result: The variable where the result is stored.
-    """
-    self.op = op
-    self.arg1 = arg1
-    self.arg2 = arg2
-    self.result = result
+    if len(symbol_table) > 1 :
 
-  def __str__(self):
-    """
-    Returns a string representation of the quad in a human-readable format.
-    """
-    if self.arg2 is None:
-      return f"{self.result} = {self.op} {self.arg1}"
+        offset = getRecord(current_subprogram[-1]).framelength
+
+        declared_temp_var = TemporaryVariable(new_tempID, "int", offset)
+        addRecordToCurrentLevel(declared_temp_var)
+        updateField(getRecord(current_subprogram[-1]), 4)
+
     else:
-      return f"{self.result} = {self.arg1} {self.op} {self.arg2}"
+        offset = symbol_table[-1].offset
+
+        declared_temp_var = TemporaryVariable(new_tempID, "int", offset)
+        addRecordToCurrentLevel(declared_temp_var)
+
+    return new_tempID
 
 
-def genquad(op, x, y, z):
-    return Quad(op, x, y, z)
+def nextQuad():
+    return label
 
 
-def newtemp():
-    re
+def genQuad(op, oprnd1, oprnd2, target):
+    global label, all_quads
+
+    quad = Quad(op, oprnd1, oprnd2, target)
+
+    all_quads[quad] = label
+
+    label += 1
+
+
+def emptyList():
+    return []
+
+
+def makeList(label):
+    return [label]
+
+
+def mergeList(list1, list2):
+    return list1 + list2
+
+
+# assigns label to target field of quads with label in list
+def backpatch(list, label):
+    global all_quads
+
+    for q, q_label in all_quads.items():
+        if q_label in list:
+            q.target = label  # set q's 4th field to label
+
+
+class Quad():
+    def __init__(self, op, oprnd1, oprnd2, target):
+        self.op = op
+        self.oprnd1 = oprnd1
+        self.oprnd2 = oprnd2
+        self.target = target
+
+    def __str__(self):
+        return (str(self.op) + ", " + str(self.oprnd1) + ", " + str(self.oprnd2) + ", " + str(self.target))
+
+
+class Entity:
+    def __init__(self, name: str):
+        self.name = name
+
+
+class Variable(Entity):
+    def __init__(self, name: str, datatype, offset: int):
+        super().__init__(name)                      # variable's ID
+        self.datatype = datatype                    # variable's data type
+        self.offset = offset                        # distance from stack's head = 4 * len
+
+    def __str__(self):
+        return (str(self.name) + ", " + str(self.datatype) + ", " + str(self.offset))
+
+class TemporaryVariable(Variable):
+    def __init__(self, name: str, datatype, offset: int):
+        super().__init__(name, datatype, offset)
+
+
+
+class Subprogram(Entity):
+    def __init__(self, name: str, startingQuad, formalParameters: list, framelength: int):
+        super().__init__(name)                      # subprogram's ID
+        self.startingQuad = startingQuad            # subprogram's first quad
+        self.formalParameters = formalParameters    # list containing a subprogram's formal parameters
+        self.framelength = framelength              # activation record's length in bytes
+
+
+class Procedure(Subprogram):
+        def __init__(self, name: str, startingQuad, formalParameters: list, framelength: int):
+            super().__init__(name, startingQuad, formalParameters, framelength)
+
+        def __str__(self):
+            return str(self.name) + ", " + str(self.startingQuad) + ", "  + str(self.framelength)
+
+class Function(Subprogram):
+        def __init__(self, name: str, startingQuad, datatype, formalParameters: list, framelength: int):
+            super().__init__(name, startingQuad, formalParameters, framelength)
+            self.datatype = datatype
+
+        def __str__(self):
+            return str(self.name) + ", " + str(self.startingQuad) + ", " + str(self.datatype) + ", " + str(self.framelength)
+
+
+class FormalParameter(Entity):
+    def __init__(self, name: str, offset: int, datatype, mode: str):
+        super().__init__(name)
+        self.offset = offset
+        self.datatype = datatype
+        self.mode = mode
+
+    def __str__(self):
+        return str(self.name) + ", " + str(self.datatype) + ", " + str(self.offset) + ", " + str(self.mode)
+
+
+class Parameter(FormalParameter):
+        def __init__(self, name: str, datatype, mode: str, offset: int):
+            super().__init__(name, datatype, mode)  # parameter's ID
+            self.offset = offset
+
+
+class SymbolicConstant(Entity):
+    def __init__(self, name: str, datatype, value):
+        super().__init__(name)
+        self.datatype = datatype
+        self.value = value
+
+
+
+
+class Scope:
+    def __init__(self, level: int):
+        self.level = level
+        self.offset = 12
+        self.entity_list = []
+
+    def __str__(self):
+
+        return "Level: " + str(self.level) + ", " + str(self.offset)
+
+
+
+def addRecordToCurrentLevel(record):
+    global symbol_table
+
+    symbol_table[-1].entity_list.append(record)
+    symbol_table[-1].offset += 4
+
+
+
+def addNewLevel():
+    # invoked at the START of main program or a subprogram
+    global symbol_table
+
+    new_scope = Scope(len(symbol_table))
+
+    symbol_table.append(new_scope)
+
+def removeCurrentLevel():
+    # invoked at the END of main program or a subprogram
+    global symbol_table
+
+    symbol_table.pop(-1)
+
+
+def updateField(subprogram, field_value):
+    # field_value is either framlength (int) or Quad object (Quad)
+    global symbol_table
+
+    if isinstance(field_value, int):
+        subprogram.framelength += field_value
+
+
+    elif isinstance(field_value, Quad):
+        subprogram.startingQuad = field_value
+
+
+def addFormalParameter(formal_parameter):
+    global symbol_table
+    symbol_table[-1][-1].formalParameters.append(formal_parameter)
+
+
+def getRecord(recordName: str):
+    entity = [entity for scope in reversed(symbol_table) for entity in scope.entity_list if entity.name == recordName][0]
+    return entity
+
 
 def main():
 
