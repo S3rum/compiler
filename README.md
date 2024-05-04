@@ -1,6 +1,6 @@
 Compiler in Python for C like code
 
-grammar:
+Grammar:
 
 startRule
 : def_main_part
@@ -13,7 +13,7 @@ def_main_part
 def_main_function
 : ’#def’ 'main'
   declarations
-  ( def_function )*  #TODO
+  ( def_function )*
   statements
 ;
 
@@ -21,7 +21,7 @@ def_function
 : ’def’ ID ’(’ id_list ’)’ ’:’
   ’#{’
   declarations
-  ( def_function )*     #TODO
+  ( def_function )*
   statements
   ’#}’
 ;
@@ -56,21 +56,21 @@ structured_statement
 
 assignment_stat
 : ID ’=’
-( expression ’;’        #TODO
+( expression ’;’
 | ’int’ ’(’ ’input’ ’(’ ’)’ ’)’ ’;’
 )
 ;
 
 print_stat
-: ’print’ ’(’ expression ’)’ #TODO
+: ’print’ ’(’ expression ’)’
 ;
 
 return_stat
-: ’return’ ’(’ expression ’)’ ’;’ #TODO
+: ’return’ ’(’ expression ’)’ ’;’
 ;
 
 if_stat
-: ’if’ ’(’ condition ’)’ ’:’  #TODO
+: ’if’ ’(’ condition ’)’ ’:’
 ( statement
 | ’#{’ statements ’#}’
 )
@@ -82,7 +82,7 @@ if_stat
 ;
 
 while_stat
-: ’while’ ’(’ condition ’)’ ’:’  #TODO
+: ’while’ ’(’ condition ’)’ ’:’
 ( statement
 | ’#{’ statements ’#}’
 )
@@ -95,7 +95,7 @@ id_list
 
 expression
 : optional_sign term
-( ADD_OP term )*    #TODO
+( ADD_OP term )*
 ;
 
 term
@@ -134,7 +134,7 @@ bool_term
 
 bool_factor
 : ’not’ condition
-| condition                        #TODO
+| condition
 | expression REL_OP expression
 
 
