@@ -269,14 +269,14 @@ class Parser:
 
         if self.currentToken.recognized_string == "def":
             self.def_function(program_name)
-        if self.currentToken.recognized_string == "#def":
+        elif self.currentToken.recognized_string == "#def":
             self.def_main_function(program_name)
         else:
             self.error("def")
 
 
     def looper(self):
-        while self.currentToken.recognized_string == "defi" or self.currentToken.recognized_string == "#def":
+        while self.currentToken.recognized_string == "def" or self.currentToken.recognized_string == "#def":
             self.program()
         if self.currentToken.recognized_string == "EOF":
             print("\nParsing ended successfully.")
@@ -311,7 +311,7 @@ class Parser:
         self.get_token()
         self.declarations()
         while self.currentToken.recognized_string == "def":
-            self.def_function()
+            self.program()
         self.globals()
 
         self.statements()
