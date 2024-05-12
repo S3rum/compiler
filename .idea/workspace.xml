@@ -5,9 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bb37a3fd-3f1f-4924-a933-a77c71216440" name="Changes" comment="v1.02">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lexor_syntax_analyzer.py" beforeDir="false" afterPath="$PROJECT_DIR$/lexor_syntax_analyzer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.cpy" beforeDir="false" afterPath="$PROJECT_DIR$/test.cpy" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,12 +24,12 @@
   }
 }</component>
   <component name="GithubDefaultAccount">
-    <option name="defaultAccountId" value="747dc303-074d-469c-852c-5ff54b02e387" />
+    <option name="defaultAccountId" value="9a847156-af9a-43ba-ad0b-740c40d876f9" />
   </component>
   <component name="GithubPullRequestsUISettings"><![CDATA[{
   "selectedUrlAndAccountId": {
     "url": "https://github.com/S3rum/compiler.git",
-    "accountId": "747dc303-074d-469c-852c-5ff54b02e387"
+    "accountId": "e6c01345-4692-4682-bbbe-ba40dd0250da"
   }
 }]]></component>
   <component name="HighlightingSettingsPerFile">
@@ -59,7 +59,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "editor.preferences.fonts.default",
+    "settings.editor.selected.configurable": "org.jetbrains.plugins.github.ui.GithubSettingsConfigurable",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -91,8 +91,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-1d06a55b98c1-74d2a5396914-JavaScript-PY-241.14494.241" />
-        <option value="bundled-python-sdk-0509580d9d50-28c9f5db9ffe-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-241.14494.241" />
+        <option value="bundled-js-predefined-1d06a55b98c1-91d5c284f522-JavaScript-PY-241.15989.155" />
+        <option value="bundled-python-sdk-babbdf50b680-7c6932dee5e4-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-241.15989.155" />
       </set>
     </attachedChunks>
   </component>
@@ -108,6 +108,8 @@
       <workItem from="1713357502528" duration="2011000" />
       <workItem from="1713633654343" duration="2193000" />
       <workItem from="1715536900782" duration="7753000" />
+      <workItem from="1715546094724" duration="1049000" />
+      <workItem from="1715547177404" duration="190000" />
     </task>
     <task id="LOCAL-00001" summary="v1.01">
       <option name="closed" value="true" />
