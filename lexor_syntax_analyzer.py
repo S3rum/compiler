@@ -555,8 +555,7 @@ class Parser:
         return self.currentToken
 
 label = 1
-temp_var_num = 1  # temporary variable counter. test
-all_quads = {}
+temp_var_num = 1  # temporary variable counter.
 main_program_declared_vars = []
 symbol_table = []
 current_subprogram = []
