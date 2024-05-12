@@ -305,11 +305,9 @@ class Parser:
         self.get_token()
         self.id_list()
         if self.get_token().recognized_string != ":":
-            raise Exception("Unexpected token. Expected : got ", self.currentToken.family, " instead in line:",
-                            self.currentToken.line_number)
+            self.error(":")
         if self.get_token().recognized_string != "#{":
-            raise Exception("Unexpected token. Expected #{ got ", self.currentToken.recognized_string, " instead in line:",
-                            self.currentToken.line_number)
+            self.error("#{")
         self.get_token()
         self.declarations()
         while self.currentToken.recognized_string == "def":
@@ -318,9 +316,7 @@ class Parser:
 
         self.statements()
         if self.currentToken.recognized_string != "#}":
-            raise Exception("Unexpected token. Expected #} got ", self.currentToken.recognized_string,
-                            " instead in line:",
-                            self.currentToken.line_number)
+            self.error("#}")
         if self.currentToken.recognized_string == "#}":
             self.get_token()
 
