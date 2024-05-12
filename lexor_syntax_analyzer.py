@@ -274,7 +274,6 @@ class Parser:
         else:
             self.error("def")
 
-
     def looper(self):
         while self.currentToken.recognized_string == "def" or self.currentToken.recognized_string == "#def":
             self.program()
@@ -286,7 +285,7 @@ class Parser:
             if self.get_token().recognized_string != "main":
                 self.error("main")
             self.get_token()
-            self.declarations()
+            self.declarations(subprogramID)
             self.globals()
             self.statements()
 
@@ -297,6 +296,9 @@ class Parser:
         global current_subprogram
         if self.currentToken.family != "KEYWORD" and self.currentToken.recognized_string != "def":
             self.error("def")
+
+        if subprogramID == program_name:
+            addNewLevel()
 
         self.get_token()
         self.parse_id_element()
@@ -309,9 +311,11 @@ class Parser:
         if self.get_token().recognized_string != "#{":
             self.error("#{")
         self.get_token()
-        self.declarations()
+
+        self.declarations(subprogramID)
+
         while self.currentToken.recognized_string == "def":
-            self.program()
+            self.def_function(subprogramID)
         self.globals()
 
         self.statements()
@@ -319,6 +323,7 @@ class Parser:
             self.error("#}")
         if self.currentToken.recognized_string == "#}":
             self.get_token()
+
 
     def globals(self):
         while self.currentToken.recognized_string == "global":
@@ -401,7 +406,7 @@ class Parser:
             self.get_token()
             self.expression()
 
-    def declarations(self):
+    def declarations(self, subprogramID: str):
         global token, main_program_declared_vars
 
 
@@ -435,7 +440,7 @@ class Parser:
         if self.currentToken.family == "ID":
             return
         else:
-            self.error("Unexpected token. Expected ID got ", self.currentToken.family, " instead in line:", self.currentToken.line_number)
+            raise Exception("Unexpected token. Expected ID got ", self.currentToken.family, " instead in line:", self.currentToken.line_number)
 
     def statements(self):
         self.statement()
@@ -689,9 +694,9 @@ class FormalParameter(Entity):
 
 
 class Parameter(FormalParameter):
-        def __init__(self, name: str, datatype, mode: str, offset: int):
-            super().__init__(name, datatype, mode)  # parameter's ID
-            self.offset = offset
+    def __init__(self, name: str, datatype, mode: str, offset: int):
+        super().__init__(name, datatype, mode)  # parameter's ID
+        self.offset = offset
 
 
 class SymbolicConstant(Entity):
