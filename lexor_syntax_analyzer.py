@@ -22,7 +22,8 @@ class Lexer:
         self.current_line = 1
 
     def filepath(self):
-        filepath = input("Give me the file's path: ")
+        #filepath = input("Give me the file's path: ")
+        filepath = "C:\\Users\\tasos\\PycharmProjects\\compiler\\test.cpy"
         with open(filepath, "r") as fd:
             return fd.read()  # Read the file contents
 
@@ -255,47 +256,52 @@ class Lexer:
 
 
 class Parser:
-
     def __init__(self, lexer):
         self.lexer = lexer
         self.currentToken = self.lexer.lexical_analyzer()
         self.nextToken = self.lexer.lexical_analyzer()
         self.looper()
 
-    def def_main_function(self):
+    def program(self):
+        global program_name
+        program_name = self.nextToken.recognized_string
+        print("Program '" + program_name + "' has started.")
+
+        if self.currentToken.recognized_string == "def":
+            self.def_function(program_name)
+        if self.currentToken.recognized_string == "#def":
+            self.def_main_function(program_name)
+        else:
+            self.error("def")
+
+
+    def looper(self):
+        while self.currentToken.recognized_string == "defi" or self.currentToken.recognized_string == "#def":
+            self.program()
+        if self.currentToken.recognized_string == "EOF":
+            print("\nParsing ended successfully.")
+
+    def def_main_function(self, subprogramID: str):
         if self.currentToken.family == "KEYWORD" and self.currentToken.recognized_string == "#def":
             if self.get_token().recognized_string != "main":
-                raise Exception("Unexpected token. Expected main")
+                self.error("main")
             self.get_token()
             self.declarations()
             self.globals()
             self.statements()
 
-    def globals(self):
-        while self.currentToken.recognized_string == "global":
-            if self.nextToken.family != "ID":
-                raise Exception("Unexpected token. Expected ID got ", self.nextToken.family, " instead in line:",
-                                self.nextToken.line_number)
-            self.declaration_line()
+    def error(self, expected: str):
+        raise Exception("Unexpected token. Expected " + expected + " but got " + self.currentToken.recognized_string + " in line: " + str(self.currentToken.line_number))
 
-    def looper(self):
-        self.declarations()
-        while self.currentToken.recognized_string == "def":
-            self.def_function()
-        while self.currentToken.recognized_string == "#def":
-            self.def_main_function()
-        if self.currentToken.recognized_string == "EOF":
-            print("\nParsing ended successfully.")
+    def def_function(self, subprogramID: str):
+        global current_subprogram
+        if self.currentToken.family != "KEYWORD" and self.currentToken.recognized_string != "def":
+            self.error("def")
 
-    def def_function(self):
-        if self.currentToken.family != "KEYWORD" and self.currentToken.recognized_string == "def":
-            raise Exception("Unexpected token. Expected def got ", self.currentToken.family, " instead in line:",
-                            self.currentToken.line_number)
         self.get_token()
         self.parse_id_element()
         if self.get_token().recognized_string != "(":
-            raise Exception("Unexpected token. Expected ( got ", self.currentToken.family, " instead in line:",
-                            self.currentToken.line_number)
+            self.error("(")
         self.get_token()
         self.id_list()
         if self.get_token().recognized_string != ":":
@@ -317,6 +323,13 @@ class Parser:
                             self.currentToken.line_number)
         if self.currentToken.recognized_string == "#}":
             self.get_token()
+
+    def globals(self):
+        while self.currentToken.recognized_string == "global":
+            if self.nextToken.family != "ID":
+                raise Exception("Unexpected token. Expected ID got ", self.nextToken.family, " instead in line:",
+                                self.nextToken.line_number)
+            self.declaration_line()
 
     def return_stat(self):
         self.get_token()
@@ -395,6 +408,9 @@ class Parser:
             self.expression()
 
     def declarations(self):
+        global token, main_program_declared_vars
+
+
         while self.currentToken.recognized_string == "#int":
             if self.nextToken.family != "ID":
                 raise Exception("Unexpected token. Expected ID got ", self.nextToken.family, " instead in line:", self.nextToken.line_number)
@@ -559,6 +575,7 @@ temp_var_num = 1  # temporary variable counter.
 main_program_declared_vars = []
 symbol_table = []
 current_subprogram = []
+program_name = ""
 
 
 def newTemp():

@@ -1,4 +1,4 @@
-def isPrime(x):
+defi isPrime(x):
 #{
     ## declarations for isPrime ##
     #int i

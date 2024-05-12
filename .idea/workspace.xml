@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bb37a3fd-3f1f-4924-a933-a77c71216440" name="Changes" comment="v1.02" />
+    <list default="true" id="bb37a3fd-3f1f-4924-a933-a77c71216440" name="Changes" comment="v1.02">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lexor_syntax_analyzer.py" beforeDir="false" afterPath="$PROJECT_DIR$/lexor_syntax_analyzer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test.cpy" beforeDir="false" afterPath="$PROJECT_DIR$/test.cpy" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -28,6 +32,9 @@
     "accountId": "747dc303-074d-469c-852c-5ff54b02e387"
   }
 }]]></component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://D:/Uni/metafrastes/metafrastes rec/ergasia/Cimple.py" root0="SKIP_HIGHLIGHTING" />
+  </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -40,22 +47,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python.lexor_syntax_analyzer.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Uni/metafrastes/compiler&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.lexor_syntax_analyzer.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "D:/Uni/metafrastes/metafrastes rec/ergasia/cutePy_4177_4183.py",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "editor.preferences.fonts.default",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration name="lexor_syntax_analyzer" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="compiler" />
@@ -100,7 +107,7 @@
       <workItem from="1713291783981" duration="11000" />
       <workItem from="1713357502528" duration="2011000" />
       <workItem from="1713633654343" duration="2193000" />
-      <workItem from="1715536900782" duration="27000" />
+      <workItem from="1715536900782" duration="7753000" />
     </task>
     <task id="LOCAL-00001" summary="v1.01">
       <option name="closed" value="true" />
@@ -126,7 +133,31 @@
       <option name="project" value="LOCAL" />
       <updated>1713634785392</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="v1.02">
+      <option name="closed" value="true" />
+      <created>1715536935587</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1715536935587</updated>
+    </task>
+    <task id="LOCAL-00005" summary="v1.02">
+      <option name="closed" value="true" />
+      <created>1715536965517</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1715536965517</updated>
+    </task>
+    <task id="LOCAL-00006" summary="v1.02">
+      <option name="closed" value="true" />
+      <created>1715536979107</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1715536979107</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -153,5 +184,19 @@
     <MESSAGE value="v1.01" />
     <MESSAGE value="v1.02" />
     <option name="LAST_COMMIT_MESSAGE" value="v1.02" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/lexor_syntax_analyzer.py</url>
+          <line>294</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/compiler$lexor_syntax_analyzer.coverage" NAME="lexor_syntax_analyzer Coverage Results" MODIFIED="1715544737290" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
   </component>
 </project>
