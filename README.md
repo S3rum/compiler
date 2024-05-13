@@ -27,12 +27,9 @@ def_function
 ;
 
 declarations
-: ( declaration_line )*
+: ( ’#int’ id_list )*
 ;
 
-declaration_line
-: ’#int’ id_list
-;
 
 statement
 : simple_statement

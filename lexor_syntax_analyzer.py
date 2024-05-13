@@ -10,8 +10,8 @@ current_subprogram = []
 program_name = ""
 starter_function = ""
 all_quads = {}
-
-
+startingOffset = 12
+allVariableRecords = []
 
 
 class Token:
@@ -354,20 +354,37 @@ class Parser:
 
     def declarations(self, subprogramID: str):
 
-        global main_func_declared_vars
+        global main_func_declared_vars, startingOffset
 
         while self.currentToken.recognized_string == "#int":
             if self.nextToken.family != "ID":
                 raise Exception("Unexpected token. Expected ID got ", self.nextToken.family, " instead in line:", self.nextToken.line_number)
+            main_func_declared_vars.append(self.get_token())
+            self.id_list(subprogramID)
+            offset = startingOffset
+            for var in main_func_declared_vars:
+                isDeclared = Variable(var, "int", offset)
+                offset += 4
+                add_variable_records(isDeclared.name, isDeclared.datatype, isDeclared.offset)
 
-            declared_vars = self.nextToken.recognized_string
-            main_func_declared_vars.append(self.currentToken)
-            self.parse_id_element(subprogramID)
-            self.declaration_line()
+    def id_list(self):
+
+        global main_func_declared_vars, subprogramID, offset
+
+        self.get_token()
+
+        while True:
+            self.parse_id_element()
+            self.get_token()
+            if self.currentToken.recognized_string == ")":
+                break
+            elif self.currentToken.recognized_string != ",":
+                raise Exception(",")
+            self.get_token()
 
     def declaration_line(self):
         self.get_token()
-        self.parse_id_element()
+        self.parse_id_element()    #JUNK CODE
         self.get_token()
         while self.currentToken.recognized_string == ",":
             self.get_token()
@@ -454,15 +471,7 @@ class Parser:
 
 
 
-    def id_list(self):
-        while True:
-            self.parse_id_element()
-            self.get_token()
-            if self.currentToken.recognized_string == ")":
-                break
-            elif self.currentToken.recognized_string != ",":
-                raise Exception(",")
-            self.get_token()
+
 
     def parse_id_element(self):
         if self.currentToken.family == "ID":
@@ -648,6 +657,14 @@ def backpatch(list, label):
     for q, q_label in all_quads.items():
         if q_label in list:
             q.target = label  # set q's 4th field to label
+
+def add_variable_records(name, datatype, offset):
+    record = {
+        'name' : name,
+        'datatype' : datatype,
+        'offset' : offset
+    }
+    allVariableRecords.append(record)
 
 
 class Quad():
