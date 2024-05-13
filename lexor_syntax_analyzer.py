@@ -2,6 +2,17 @@ import sys
 #ANASTASIOS PAPAGEWRGIOU AM:4758
 #VASILEIOS PAPADIMITRIOU AM:4759
 
+label = 1
+temp_var_num = 1  # temporary variable counter.
+main_func_declared_vars = []
+symbol_table = []
+current_subprogram = []
+program_name = ""
+starter_function = ""
+all_quads = {}
+
+
+
 
 class Token:
     def __init__(self, family, recognized_string, line_number, token_number):
@@ -296,11 +307,11 @@ class Parser:
         global current_subprogram
         if self.currentToken.family != "KEYWORD" and self.currentToken.recognized_string != "def":
             self.error("def")
-
-        if subprogramID == program_name:
-            addNewLevel()
-
         self.get_token()
+        starter_function = self.currentToken.recognized_string
+        subprogramID = self.currentToken.recognized_string
+        current_subprogram = subprogramID
+
         self.parse_id_element()
         if self.get_token().recognized_string != "(":
             self.error("(")
@@ -312,10 +323,17 @@ class Parser:
             self.error("#{")
         self.get_token()
 
-        self.declarations(subprogramID)
-
-        while self.currentToken.recognized_string == "def":
-            self.def_function(subprogramID)
+        start_quad = nextQuad()
+        genQuad("begin_block", subprogramID, "_", "_")
+        while True:
+            if self.get_token().recognized_string == "#int":
+                self.declarations(subprogramID)
+            if self.get_token().recognized_string == "def":
+                self.def_function(subprogramID)
+            if self.get_token().recognized_string == "global":
+                self.globals(subprogramID)
+            else:
+                break
         self.globals()
 
         self.statements()
@@ -324,13 +342,39 @@ class Parser:
         if self.currentToken.recognized_string == "#}":
             self.get_token()
 
+    def globals(self, subprogramID: str):
 
-    def globals(self):
+        global main_func_del
+
         while self.currentToken.recognized_string == "global":
             if self.nextToken.family != "ID":
                 raise Exception("Unexpected token. Expected ID got ", self.nextToken.family, " instead in line:",
                                 self.nextToken.line_number)
             self.declaration_line()
+
+    def declarations(self, subprogramID: str):
+
+        global main_func_declared_vars
+
+        while self.currentToken.recognized_string == "#int":
+            if self.nextToken.family != "ID":
+                raise Exception("Unexpected token. Expected ID got ", self.nextToken.family, " instead in line:", self.nextToken.line_number)
+
+            declared_vars = self.nextToken.recognized_string
+            main_func_declared_vars.append(self.currentToken)
+            self.parse_id_element(subprogramID)
+            self.declaration_line()
+
+    def declaration_line(self):
+        self.get_token()
+        self.parse_id_element()
+        self.get_token()
+        while self.currentToken.recognized_string == ",":
+            self.get_token()
+            if self.currentToken.family != "ID":
+                self.error("ID")
+            self.parse_id_element()
+            self.get_token()
 
     def return_stat(self):
         self.get_token()
@@ -406,25 +450,9 @@ class Parser:
             self.get_token()
             self.expression()
 
-    def declarations(self, subprogramID: str):
-        global token, main_program_declared_vars
 
 
-        while self.currentToken.recognized_string == "#int":
-            if self.nextToken.family != "ID":
-                raise Exception("Unexpected token. Expected ID got ", self.nextToken.family, " instead in line:", self.nextToken.line_number)
-            self.declaration_line()
 
-    def declaration_line(self):
-        self.get_token()
-        self.parse_id_element()
-        self.get_token()
-        while self.currentToken.recognized_string == ",":
-            self.get_token()
-            if self.currentToken.family != "ID":
-                self.error("ID")
-            self.parse_id_element()
-            self.get_token()
 
     def id_list(self):
         while True:
@@ -561,12 +589,7 @@ class Parser:
         self.nextToken = self.lexer.lexical_analyzer()
         return self.currentToken
 
-label = 1
-temp_var_num = 1  # temporary variable counter.
-main_program_declared_vars = []
-symbol_table = []
-current_subprogram = []
-program_name = ""
+
 
 
 def newTemp():
