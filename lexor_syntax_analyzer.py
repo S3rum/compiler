@@ -1,17 +1,13 @@
 import sys
-#ANASTASIOS PAPAGEWRGIOU AM:4758
-#VASILEIOS PAPADIMITRIOU AM:4759
+#ANASTASIOS PAPAGEWRGIOU AM:4758 cs04758
+#VASILEIOS PAPADIMITRIOU AM:4759 cs04759
+
 
 label = 1
 temp_var_num = 1  # temporary variable counter.
-main_func_declared_vars = []
-symbol_table = []
 current_subprogram = []
 program_name = ""
-starter_function = ""
 all_quads = {}
-startingOffset = 12
-allVariableRecords = []
 
 
 class Token:
@@ -33,8 +29,8 @@ class Lexer:
         self.current_line = 1
 
     def filepath(self):
-        #filepath = input("Give me the file's path: ")
-        filepath = "C:\\Users\\srig\\Desktop\\Uni\\compiler\\test.cpy"
+        filepath = input("Give me the file's path: ")
+        #filepath = "C:\\Users\\srig\\Desktop\\Uni\\compiler\\test.cpy"
         with open(filepath, "r") as fd:
             return fd.read()  # Read the file contents
 
@@ -277,7 +273,6 @@ class Parser:
         global program_name
         program_name = self.nextToken.recognized_string
         print("Program '" + program_name + "' has started.")
-
         if self.currentToken.recognized_string == "def":
             self.def_function(program_name)
         elif self.currentToken.recognized_string == "#def":
@@ -299,9 +294,6 @@ class Parser:
             self.declarations(subprogramID)
             self.globals(subprogramID)
             self.statements(subprogramID)
-
-    def error(self, expected: str):
-        raise Exception("Unexpected token. Expected " + expected + " but got " + self.currentToken.recognized_string + " in line: " + str(self.currentToken.line_number))
 
     def def_function(self, subprogramID: str):
         global current_subprogram
@@ -338,6 +330,7 @@ class Parser:
                 self.statements(subprogramID)
             else:
                 break
+
         genQuad("halt", '_', '_', '_')
         genQuad('end_block', subprogramID, '_', '_')
 
@@ -347,9 +340,6 @@ class Parser:
             self.get_token()
 
     def globals(self, subprogramID: str):
-
-        global main_func_declared_vars
-
         while self.currentToken.recognized_string == "global":
             if self.nextToken.family != "ID":
                 raise Exception("Unexpected token. Expected ID got ", self.nextToken.family, " instead in line:",
@@ -358,17 +348,13 @@ class Parser:
             self.id_list()
 
     def declarations(self, subprogramID: str):
-
-        global main_func_declared_vars, startingOffset
-
         while self.currentToken.recognized_string == "#int":
             if self.nextToken.family != "ID":
                 raise Exception("Unexpected token. Expected ID got ", self.nextToken.family, " instead in line:", self.nextToken.line_number)
-            main_func_declared_vars.append(self.get_token())
+            self.get_token()
             self.id_list()
 
     def id_list(self):
-
         global main_func_declared_vars, offset
         self.parse_id_element()
         while self.nextToken.recognized_string == ",":
@@ -377,7 +363,6 @@ class Parser:
             if self.currentToken.recognized_string == ")":
                 break
             self.parse_id_element()
-
         self.get_token()
 
     def declaration_line(self):
@@ -455,10 +440,6 @@ class Parser:
             self.statement(subprogramID)
             backpatch(ifList, nextQuad())
 
-
-
-
-
     def while_stat(self,subprogramID: str):
         self.get_token()
         condQuad = nextQuad()
@@ -520,7 +501,7 @@ class Parser:
             R_True = makeList(nextQuad())
             genQuad(rel_op, E1, E2, '_')
             R_False = makeList(nextQuad())
-            genQuad("jump", '_', '_', '_') # op = jump
+            genQuad("jump", '_', '_', '_')
         else:
             (B_True, B_False) = self.condition()
             R_True = B_True
@@ -660,16 +641,12 @@ class Parser:
                 self.get_token()
                 return returned_expression
         elif token.family == "ID":
-
             self.parse_id_element()
             self.get_token()
-
             if self.currentToken.recognized_string == ")" and self.nextToken.family in ["MUL_OPERATOR", "ADD_OPERATOR"]:
                 self.get_token()
-
             if self.currentToken.recognized_string == "(":
                 is_subprogram = self.id_tail()
-
                 if is_subprogram:
                     returned_value = newTemp()
                     genQuad("par", returned_value, "ret", '_')
@@ -696,6 +673,8 @@ class Parser:
         self.nextToken = self.lexer.lexical_analyzer()
         return self.currentToken
 
+def error(self, expected: str):
+    raise Exception("Unexpected token. Expected " + expected + " but got " + self.currentToken.recognized_string + " in line: " + str(self.currentToken.line_number))
 
 def create_int_file():
     with open('test.int', 'w', encoding='utf-8') as int_code_file:
@@ -709,10 +688,8 @@ def newTemp():
     temp_var_num += 1
     return new_tempID
 
-
 def nextQuad():
     return label
-
 
 def genQuad(op, oprnd1, oprnd2, target):
     global label, all_quads
@@ -722,11 +699,6 @@ def genQuad(op, oprnd1, oprnd2, target):
     all_quads[quad] = label
 
     label += 1
-
-
-def emptyList():
-    return []
-
 
 def makeList(label):
     return [label]
@@ -744,13 +716,7 @@ def backpatch(list, label):
         if q_label in list:
             q.target = label  # set q's 4th field to label
 
-def add_variable_records(name, datatype, offset):
-    record = {
-        'name' : name,
-        'datatype' : datatype,
-        'offset' : offset
-    }
-    allVariableRecords.append(record)
+
 
 
 class Quad:
