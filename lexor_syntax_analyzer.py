@@ -34,7 +34,7 @@ class Lexer:
 
     def filepath(self):
         #filepath = input("Give me the file's path: ")
-        filepath = "C:\\Users\\tasos\\PycharmProjects\\compiler\\test.cpy"
+        filepath = "C:\\Users\\srig\\Desktop\\Uni\\compiler\\test.cpy"
         with open(filepath, "r") as fd:
             return fd.read()  # Read the file contents
 
@@ -297,8 +297,8 @@ class Parser:
                 self.error("main")
             self.get_token()
             self.declarations(subprogramID)
-            self.globals()
-            self.statements()
+            self.globals(subprogramID)
+            self.statements(subprogramID)
 
     def error(self, expected: str):
         raise Exception("Unexpected token. Expected " + expected + " but got " + self.currentToken.recognized_string + " in line: " + str(self.currentToken.line_number))
@@ -308,7 +308,7 @@ class Parser:
         if self.currentToken.family != "KEYWORD" and self.currentToken.recognized_string != "def":
             self.error("def")
         self.get_token()
-        starter_function = self.currentToken.recognized_string
+
         subprogramID = self.currentToken.recognized_string
         current_subprogram = subprogramID
 
@@ -322,21 +322,25 @@ class Parser:
         if self.get_token().recognized_string != "#{":
             self.error("#{")
         self.get_token()
+        self.globals(subprogramID)
+        self.declarations(subprogramID)
 
-        start_quad = nextQuad()
-        genQuad("begin_block", subprogramID, "_", "_")
+        genQuad("begin_block", subprogramID, '_', '_')
+
         while True:
-            if self.get_token().recognized_string == "#int":
+            if self.currentToken.recognized_string == "#int":
                 self.declarations(subprogramID)
-            if self.get_token().recognized_string == "def":
+            if self.currentToken.recognized_string == "def":
                 self.def_function(subprogramID)
-            if self.get_token().recognized_string == "global":
+            if self.currentToken.recognized_string == "global":
                 self.globals(subprogramID)
+            if self.currentToken.family == "ID":
+                self.statements(subprogramID)
             else:
                 break
-        self.globals()
+        genQuad("halt", '_', '_', '_')
+        genQuad('end_block', subprogramID, '_', '_')
 
-        self.statements()
         if self.currentToken.recognized_string != "#}":
             self.error("#}")
         if self.currentToken.recognized_string == "#}":
@@ -344,13 +348,14 @@ class Parser:
 
     def globals(self, subprogramID: str):
 
-        global main_func_del
+        global main_func_declared_vars
 
         while self.currentToken.recognized_string == "global":
             if self.nextToken.family != "ID":
                 raise Exception("Unexpected token. Expected ID got ", self.nextToken.family, " instead in line:",
                                 self.nextToken.line_number)
-            self.declaration_line()
+            self.get_token()
+            self.id_list()
 
     def declarations(self, subprogramID: str):
 
@@ -360,27 +365,20 @@ class Parser:
             if self.nextToken.family != "ID":
                 raise Exception("Unexpected token. Expected ID got ", self.nextToken.family, " instead in line:", self.nextToken.line_number)
             main_func_declared_vars.append(self.get_token())
-            self.id_list(subprogramID)
-            offset = startingOffset
-            for var in main_func_declared_vars:
-                isDeclared = Variable(var, "int", offset)
-                offset += 4
-                add_variable_records(isDeclared.name, isDeclared.datatype, isDeclared.offset)
+            self.id_list()
 
     def id_list(self):
 
-        global main_func_declared_vars, subprogramID, offset
-
-        self.get_token()
-
-        while True:
-            self.parse_id_element()
+        global main_func_declared_vars, offset
+        self.parse_id_element()
+        while self.nextToken.recognized_string == ",":
+            self.get_token()
             self.get_token()
             if self.currentToken.recognized_string == ")":
                 break
-            elif self.currentToken.recognized_string != ",":
-                raise Exception(",")
-            self.get_token()
+            self.parse_id_element()
+
+        self.get_token()
 
     def declaration_line(self):
         self.get_token()
@@ -397,81 +395,132 @@ class Parser:
         self.get_token()
         self.expression()
 
-    def if_stat(self):
+    def if_stat(self, subprogramID: str):
         self.get_token()
-        self.condition()
+        (condition_True, condition_False) = self.condition()
         if self.currentToken.recognized_string != ":":
             self.error(":")
+        backpatch(condition_True, nextQuad())
         if self.get_token().recognized_string == "#{":
             self.get_token()
-            self.statements()
+            self.statements(subprogramID)
             if self.get_token().recognized_string != "#}":
                 self.error("#}")
+            ifList = makeList(nextQuad())
+            genQuad('jump', '_', '_', '_')
+            backpatch(condition_False,nextQuad())
         else:
-            self.statement()
+            self.statement(subprogramID)
+            ifList = makeList(nextQuad())
+            genQuad('jump', '_', '_', '_')
+            backpatch(condition_False,nextQuad())
 
         if self.currentToken.recognized_string == "elif":
             self.get_token()
-            self.condition()
-            self.elif_stat()
-
+            (condition_True, condition_False) = self.condition()
+            if self.currentToken.recognized_string != ":":
+                self.error(":")
+            backpatch(condition_True, nextQuad())
+            token = self.get_token()
+            if token.recognized_string == "#{":
+                self.get_token()
+                self.statements(subprogramID)
+                ifList = makeList(nextQuad())
+                genQuad('jump', '_', '_', '_')
+                if self.get_token().recognized_string != "#}":
+                    self.error("#}")
+                backpatch(ifList, nextQuad())
+            else:
+                self.statement(subprogramID)
+                ifList = makeList(nextQuad())
+                genQuad('jump', '_', '_', '_')
+                backpatch(condition_False,nextQuad())
         if self.currentToken.recognized_string == "else":
             self.get_token()
-            self.elif_stat()
-
-    def elif_stat(self):
-        if self.currentToken.recognized_string != ":":
-            self.error(":")
-        token = self.get_token()
-        if token.recognized_string == "#{":
-            self.get_token()
-            self.statements()
-            if self.get_token().recognized_string != "#}":
-                self.error("#}")
+            if self.currentToken.recognized_string != ":":
+                self.error(":")
+            token = self.get_token()
+            if token.recognized_string == "#{":
+                self.get_token()
+                self.statements(subprogramID)
+                if self.get_token().recognized_string != "#}":
+                    self.error("#}")
+                backpatch(ifList, nextQuad())
+            else:
+                self.statement(subprogramID)
+                ifList = makeList(nextQuad())
+                genQuad('jump', '_', '_', '_')
+                backpatch(condition_False,nextQuad())
         else:
-            self.statement()
+            self.statement(subprogramID)
+            backpatch(ifList, nextQuad())
 
-    def while_stat(self):
+
+
+
+
+    def while_stat(self,subprogramID: str):
         self.get_token()
         self.condition()
         if self.currentToken.recognized_string != ":":
             self.error(":")
         if self.get_token().recognized_string == "#{":
             self.get_token()
-            self.statements()
+            self.statements(subprogramID)
             if self.currentToken.recognized_string != "#}":
                 self.error("#}")
             self.get_token()
         else:
-            self.statement()
+            self.statement(subprogramID)
 
     def condition(self):
-        self.bool_term()
+        (Q1_True, Q1_False) = self.bool_term()
+        B_True = Q1_True
+        B_False = Q1_False
+
         while self.currentToken.recognized_string == "or":
+            backpatch(B_False, nextQuad())
             self.get_token()
-            self.bool_term()
+            (Q2_True, Q2_False) = self.bool_term()
+            B_True = mergeList(B_True, Q2_True)
+            B_False = Q2_False
+        return (B_True, B_False)
 
     def bool_term(self):
-        self.bool_factor()
+        (R1_True, R1_False) = self.bool_factor()
+        Q_True = R1_True
+        Q_False = R1_False
+
         while self.currentToken.recognized_string == "and":
+            backpatch(Q_True, nextQuad())
             self.get_token()
-            self.bool_factor()
+            (R2_True, R2_False) = self.bool_factor()
+            Q_False = mergeList(Q_False, R2_False)
+            Q_True = R2_True
+        return (Q_True, Q_False)
 
     def bool_factor(self):
         token = self.currentToken
-        if token.recognized_string == "not":
+        if token.recognized_string == "not":                #bool_factor: ’not’ condition|
+            self.get_token()                                #                   condition|
+            (B_True, B_False) = self.condition()            #                   expression REL_OP expression
+            R_True = B_False
+            R_False = B_True
+        elif self.nextToken.recognized_string in ('!=', '<=', '>=', '>', '<', '==', "(", "%"):
+            E1 = self.expression()
+            rel_op = self.currentToken.recognized_string
             self.get_token()
-            self.condition()
-        self.expression()
-        if self.currentToken.family == "COMPARATOR":  # maybe change > < klp se REL_OP gia na jexwrizei apo ta =
-            self.get_token()
-            self.expression()
+            E2 = self.expression()
+            R_True = makeList(nextQuad())
+            genQuad(rel_op, E1, E2, '_')
+            R_False = makeList(nextQuad())
+            genQuad("jump", '_', '_', '_') # op = jump
+        else:
+            (B_True, B_False) = self.condition()
+            R_True = B_True
+            R_False = B_False
 
-
-
-
-
-
+        return (R_True, R_False)
 
     def parse_id_element(self):
         if self.currentToken.family == "ID":
@@ -479,34 +528,34 @@ class Parser:
         else:
             raise Exception("Unexpected token. Expected ID got ", self.currentToken.family, " instead in line:", self.currentToken.line_number)
 
-    def statements(self):
-        self.statement()
+    def statements(self, subprogramID: str):
+        self.statement(subprogramID)
         string = self.currentToken.recognized_string
         while string == "print" or string == "return" or self.nextToken.recognized_string == "=" or string == "while" or string == "if":
             if self.nextToken.recognized_string == "=":
-                self.statement()
+                self.statement(subprogramID)
             else:
-                self.statement()
+                self.statement(subprogramID)
             string = self.currentToken.recognized_string
 
-    def statement(self):
+    def statement(self,subprogramID: str):
         string = self.currentToken.recognized_string
         if string == "print" or string == "return" or self.nextToken.recognized_string == "=":
-            self.simple_statement()
+            self.simple_statement(subprogramID)
         elif string == "if" or string == "while":
-            self.structured_statement()
+            self.structured_statement(subprogramID)
         else:
-            raise Exception("Expected statement found:", string)
+            raise Exception("Expected statement found:"+ string)
 
-    def simple_statement(self):
+    def simple_statement(self, subprogramID: str):
         if self.currentToken.recognized_string == "print":
             self.print_stat()
         if self.currentToken.recognized_string == "return":
             self.return_stat()
         elif self.nextToken.recognized_string == "=":
-            self.assignment_stat()
+            self.assignment_stat(subprogramID)
 
-    def assignment_stat(self):
+    def assignment_stat(self, subprogramID: str):
         self.get_token()
         self.get_token()
         if self.currentToken.recognized_string == "int":
@@ -520,15 +569,17 @@ class Parser:
                 self.error(")")
             if self.get_token().recognized_string != ")":
                 self.error(")")
+            genQuad("in", subprogramID, '_', '_')
             self.get_token()
         else:
-            self.expression()
+            source_expression = self.expression()
+            genQuad('=', source_expression, '_', subprogramID)
 
-    def structured_statement(self):
+    def structured_statement(self, subprogramID: str):
         if self.currentToken.recognized_string == "if":
-            self.if_stat()
+            self.if_stat(subprogramID)
         elif self.currentToken.recognized_string == "while":
-            self.while_stat()
+            self.while_stat(subprogramID)
 
     def print_stat(self):
         if self.nextToken.recognized_string != "(":
@@ -550,44 +601,85 @@ class Parser:
             self.get_token()
 
     def actual_par_list(self):
-        self.expression()
+        expression_parameter = self.expression()
+        genQuad("par", expression_parameter, "cv", '_')
         while self.currentToken.recognized_string == ",":
             self.get_token()
-            self.expression()
+            expression_parameter = self.expression()
+            genQuad("par", expression_parameter, "cv", '_')
 
     def optional_sign(self):
         if self.currentToken.family == "ADD_OPERATOR":
             return
 
     def expression(self):
-        self.term()
+        possible_left_term = self.currentToken.recognized_string
+        left_term = self.term()
+        if left_term is None:
+            left_term = possible_left_term
         while self.currentToken.family == "ADD_OPERATOR":
-            self.get_token()
-            self.term()
+            add_op = self.currentToken.recognized_string
+            possible_right_term = self.get_token().recognized_string
+            right_term = self.term()
+            if right_term is None:
+                right_term = possible_right_term
+            factor_temp = newTemp()
+            genQuad(add_op, left_term, right_term, factor_temp)
+            left_term = factor_temp
+        return left_term
 
     def term(self):
-        self.factor()
+        possible_left_factor = self.currentToken.recognized_string
+        left_factor = self.factor()
+        if left_factor is None:
+            left_factor = possible_left_factor
         while self.currentToken.family == "MUL_OPERATOR":
-            self.get_token()
-            self.factor()
+            mul_op = self.currentToken.recognized_string
+            possible_right_factor = self.get_token()
+            right_factor = self.factor()
+            if right_factor is None:
+                right_factor = possible_right_factor
+            term_temp = newTemp()
+            genQuad(mul_op, left_factor, right_factor, term_temp)
+            left_factor = term_temp
+        return left_factor
 
     def factor(self):
         token = self.currentToken
+        returned_expression = ""
         if token.recognized_string == "(":
             self.get_token()
-            self.expression()
+            returned_expression = self.expression()
+            if self.currentToken.recognized_string == ")":
+                self.get_token()
+                return returned_expression
         elif token.family == "ID":
+
             self.parse_id_element()
             self.get_token()
+
             if self.currentToken.recognized_string == ")" and self.nextToken.family in ["MUL_OPERATOR", "ADD_OPERATOR"]:
                 self.get_token()
+
             if self.currentToken.recognized_string == "(":
-                self.id_tail()
+                is_subprogram = self.id_tail()
+
+                if is_subprogram:
+                    returned_value = newTemp()
+                    genQuad("par", returned_value, "ret", '_')
+                    return returned_value
+
         elif token.family == "NUMBER":
+            returned_int = self.currentToken.recognized_string
             self.get_token()
+            return returned_int
+
         elif self.nextToken.family == "NUMBER" and token.recognized_string == "-":
             self.get_token()
+            returned_int = self.currentToken.recognized_string
             self.get_token()
+            return returned_int
+
         else:
             raise Exception("Unexpected token. Expected factor got ", self.currentToken.family, " instead in line:",
                             self.currentToken.line_number)
@@ -599,28 +691,16 @@ class Parser:
         return self.currentToken
 
 
-
+def create_int_file():
+    with open('test.int', 'w', encoding='utf-8') as int_code_file:
+        for q, q_label in all_quads.items():
+            int_code_file.write(str(q_label) + ": " + str(q) + '\n')
 
 def newTemp():
     # T_1, T_2, ..., T_n
     global temp_var_num
     new_tempID = "T_" + str(temp_var_num)
     temp_var_num += 1
-
-    if len(symbol_table) > 1 :
-
-        offset = getRecord(current_subprogram[-1]).framelength
-
-        declared_temp_var = TemporaryVariable(new_tempID, "int", offset)
-        addRecordToCurrentLevel(declared_temp_var)
-        updateField(getRecord(current_subprogram[-1]), 4)
-
-    else:
-        offset = symbol_table[-1].offset
-
-        declared_temp_var = TemporaryVariable(new_tempID, "int", offset)
-        addRecordToCurrentLevel(declared_temp_var)
-
     return new_tempID
 
 
@@ -667,7 +747,7 @@ def add_variable_records(name, datatype, offset):
     allVariableRecords.append(record)
 
 
-class Quad():
+class Quad:
     def __init__(self, op, oprnd1, oprnd2, target):
         self.op = op
         self.oprnd1 = oprnd1
@@ -675,134 +755,9 @@ class Quad():
         self.target = target
 
     def __str__(self):
-        return (str(self.op) + ", " + str(self.oprnd1) + ", " + str(self.oprnd2) + ", " + str(self.target))
+        return str(self.op) + ", " + str(self.oprnd1) + ", " + str(self.oprnd2) + ", " + str(self.target)
 
 
-class Entity:
-    def __init__(self, name: str):
-        self.name = name
-
-
-class Variable(Entity):
-    def __init__(self, name: str, datatype, offset: int):
-        super().__init__(name)                      # variable's ID
-        self.datatype = datatype                    # variable's data type
-        self.offset = offset                        # distance from stack's head = 4 * len
-
-    def __str__(self):
-        return (str(self.name) + ", " + str(self.datatype) + ", " + str(self.offset))
-
-class TemporaryVariable(Variable):
-    def __init__(self, name: str, datatype, offset: int):
-        super().__init__(name, datatype, offset)
-
-
-
-class Subprogram(Entity):
-    def __init__(self, name: str, startingQuad, formalParameters: list, framelength: int):
-        super().__init__(name)                      # subprogram's ID
-        self.startingQuad = startingQuad            # subprogram's first quad
-        self.formalParameters = formalParameters    # list containing a subprogram's formal parameters
-        self.framelength = framelength              # activation record's length in bytes
-
-
-class Procedure(Subprogram):
-        def __init__(self, name: str, startingQuad, formalParameters: list, framelength: int):
-            super().__init__(name, startingQuad, formalParameters, framelength)
-
-        def __str__(self):
-            return str(self.name) + ", " + str(self.startingQuad) + ", "  + str(self.framelength)
-
-class Function(Subprogram):
-        def __init__(self, name: str, startingQuad, datatype, formalParameters: list, framelength: int):
-            super().__init__(name, startingQuad, formalParameters, framelength)
-            self.datatype = datatype
-
-        def __str__(self):
-            return str(self.name) + ", " + str(self.startingQuad) + ", " + str(self.datatype) + ", " + str(self.framelength)
-
-
-class FormalParameter(Entity):
-    def __init__(self, name: str, offset: int, datatype, mode: str):
-        super().__init__(name)
-        self.offset = offset
-        self.datatype = datatype
-        self.mode = mode
-
-    def __str__(self):
-        return str(self.name) + ", " + str(self.datatype) + ", " + str(self.offset) + ", " + str(self.mode)
-
-
-class Parameter(FormalParameter):
-    def __init__(self, name: str, datatype, mode: str, offset: int):
-        super().__init__(name, datatype, mode)  # parameter's ID
-        self.offset = offset
-
-
-class SymbolicConstant(Entity):
-    def __init__(self, name: str, datatype, value):
-        super().__init__(name)
-        self.datatype = datatype
-        self.value = value
-
-
-
-
-class Scope:
-    def __init__(self, level: int):
-        self.level = level
-        self.offset = 12
-        self.entity_list = []
-
-    def __str__(self):
-
-        return "Level: " + str(self.level) + ", " + str(self.offset)
-
-
-
-def addRecordToCurrentLevel(record):
-    global symbol_table
-
-    symbol_table[-1].entity_list.append(record)
-    symbol_table[-1].offset += 4
-
-
-
-def addNewLevel():
-    # invoked at the START of main program or a subprogram
-    global symbol_table
-
-    new_scope = Scope(len(symbol_table))
-
-    symbol_table.append(new_scope)
-
-def removeCurrentLevel():
-    # invoked at the END of main program or a subprogram
-    global symbol_table
-
-    symbol_table.pop(-1)
-
-
-def updateField(subprogram, field_value):
-    # field_value is either framlength (int) or Quad object (Quad)
-    global symbol_table
-
-    if isinstance(field_value, int):
-        subprogram.framelength += field_value
-
-
-    elif isinstance(field_value, Quad):
-        subprogram.startingQuad = field_value
-
-
-def addFormalParameter(formal_parameter):
-    global symbol_table
-    symbol_table[-1][-1].formalParameters.append(formal_parameter)
-
-
-def getRecord(recordName: str):
-    entity = [entity for scope in reversed(symbol_table) for entity in scope.entity_list if entity.name == recordName][0]
-    return entity
 
 
 def main():
@@ -821,6 +776,7 @@ def main():
         print("Token family:"+token.family + " Token recognized_string:" + token.recognized_string + " Token line:" + str(token.line_number) + " Token number is:" + str(token.token_number))
         tokens.append(token)
     Parser(lexer)
+    create_int_file()
 
 
 if __name__ == "__main__":
