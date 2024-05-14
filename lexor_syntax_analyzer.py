@@ -571,7 +571,7 @@ class Parser:
     def print_stat(self):
         if self.nextToken.recognized_string != "(":
             raise Exception("Unexpected token. Expected ( got ", self.nextToken.recognized_string,
-                            " instead in line:", self.currentToken.line_number)
+                            " instead in line:", self.currentToken.line_number )
         self.get_token()
         self.get_token()
         self.expression()
