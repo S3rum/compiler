@@ -461,7 +461,9 @@ class Parser:
 
     def while_stat(self,subprogramID: str):
         self.get_token()
-        self.condition()
+        condQuad = nextQuad()
+        (condition_True, condition_False) = self.condition()
+        backpatch(condition_True, nextQuad())
         if self.currentToken.recognized_string != ":":
             self.error(":")
         if self.get_token().recognized_string == "#{":
@@ -470,8 +472,12 @@ class Parser:
             if self.currentToken.recognized_string != "#}":
                 self.error("#}")
             self.get_token()
+            genQuad('jump', '_', '_', condQuad)
+            backpatch(condition_False, nextQuad())
         else:
             self.statement(subprogramID)
+            genQuad('jump', '_', '_', condQuad)
+            backpatch(condition_False, nextQuad())
 
     def condition(self):
         (Q1_True, Q1_False) = self.bool_term()
