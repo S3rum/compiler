@@ -29,8 +29,8 @@ class Lexer:
         self.current_line = 1
 
     def filepath(self):
-        filepath = input("Give me the file's path: ")
-        #filepath = "C:\\Users\\srig\\Desktop\\Uni\\compiler\\test.cpy"
+        #filepath = input("Give me the file's path: ")
+        filepath = "C:\\Users\\srig\\Desktop\\Uni\\compiler\\test.cpy"
         with open(filepath, "r") as fd:
             return fd.read()  # Read the file contents
 
@@ -493,7 +493,16 @@ class Parser:
             (B_True, B_False) = self.condition()            #                   expression REL_OP expression
             R_True = B_False
             R_False = B_True
-        elif self.nextToken.recognized_string in ('!=', '<=', '>=', '>', '<', '==', "(", "%"):
+        elif self.nextToken.recognized_string in ('!=', '<=', '>=', '>', '<', '==', "%"):
+            E1 = self.expression()
+            rel_op = self.currentToken.recognized_string
+            self.get_token()
+            E2 = self.expression()
+            R_True = makeList(nextQuad())
+            genQuad(rel_op, E1, E2, '_')
+            R_False = makeList(nextQuad())
+            genQuad("jump", '_', '_', '_')
+        elif self.nextToken.recognized_string == "(":
             E1 = self.expression()
             rel_op = self.currentToken.recognized_string
             self.get_token()
@@ -640,17 +649,21 @@ class Parser:
             if self.currentToken.recognized_string == ")":
                 self.get_token()
                 return returned_expression
+            return returned_expression
         elif token.family == "ID":
+            id = self.currentToken.recognized_string
             self.parse_id_element()
             self.get_token()
             if self.currentToken.recognized_string == ")" and self.nextToken.family in ["MUL_OPERATOR", "ADD_OPERATOR"]:
                 self.get_token()
+                return id
             if self.currentToken.recognized_string == "(":
                 is_subprogram = self.id_tail()
                 if is_subprogram:
                     returned_value = newTemp()
                     genQuad("par", returned_value, "ret", '_')
                     return returned_value
+            return id
 
         elif token.family == "NUMBER":
             returned_int = self.currentToken.recognized_string
@@ -673,8 +686,10 @@ class Parser:
         self.nextToken = self.lexer.lexical_analyzer()
         return self.currentToken
 
-def error(self, expected: str):
-    raise Exception("Unexpected token. Expected " + expected + " but got " + self.currentToken.recognized_string + " in line: " + str(self.currentToken.line_number))
+    def error(self, expected: str):
+        raise Exception("Unexpected token. Expected " + expected + " but got " + self.currentToken.recognized_string + " in line: " + str(self.currentToken.line_number))
+
+
 
 def create_int_file():
     with open('test.int', 'w', encoding='utf-8') as int_code_file:
