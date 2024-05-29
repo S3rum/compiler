@@ -355,7 +355,6 @@ class Parser:
             self.id_list()
 
     def id_list(self):
-        global main_func_declared_vars, offset
         self.parse_id_element()
         while self.nextToken.recognized_string == ",":
             self.get_token()

@@ -1,3 +1,7 @@
+
+
+
+
 def isPrime(x):
 #{
     ## declarations for isPrime ##
@@ -123,7 +127,7 @@ def leap(year):
 #int i
 counterFunctionCalls = 0
 
-i = int(input())
+
 print(i)
 
 
