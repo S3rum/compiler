@@ -4,11 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bb37a3fd-3f1f-4924-a933-a77c71216440" name="Changes" comment="v3.0">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/symboltable_patch.py" beforeDir="false" afterPath="$PROJECT_DIR$/symboltable_patch.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.cpy" beforeDir="false" afterPath="$PROJECT_DIR$/test.cpy" afterDir="false" />
-    </list>
+    <list default="true" id="bb37a3fd-3f1f-4924-a933-a77c71216440" name="Changes" comment="v4.0" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -128,7 +124,7 @@
       <workItem from="1715808679804" duration="7000" />
       <workItem from="1716919109451" duration="137000" />
       <workItem from="1716983496040" duration="7606000" />
-      <workItem from="1716991199680" duration="22854000" />
+      <workItem from="1716991199680" duration="23173000" />
     </task>
     <task id="LOCAL-00001" summary="v1.01">
       <option name="closed" value="true" />
@@ -258,7 +254,15 @@
       <option name="project" value="LOCAL" />
       <updated>1717010639243</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="v4.0">
+      <option name="closed" value="true" />
+      <created>1717014812677</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1717014812677</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -286,7 +290,8 @@
     <MESSAGE value="v1.02" />
     <MESSAGE value="v2.0" />
     <MESSAGE value="v3.0" />
-    <option name="LAST_COMMIT_MESSAGE" value="v3.0" />
+    <MESSAGE value="v4.0" />
+    <option name="LAST_COMMIT_MESSAGE" value="v4.0" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

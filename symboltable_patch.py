@@ -941,7 +941,7 @@ def create_asm_file(quad, quad_num):
         halt_label = quad_num
 
     if quad_num == 1:
-        final_file.write('\n' * 25)  # padding.
+        final_file.write('\n' * 25)
 
     final_file.write('L_' + str(quad_num) + ':\n')
 
