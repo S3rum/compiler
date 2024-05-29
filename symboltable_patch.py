@@ -884,7 +884,7 @@ def add_variable_records(name, datatype, offset):
     allVariableRecords.append(record)
 
 
-def loadvr(v, reg):
+def load(v, reg):
     global voffset
 
     # Determine if the variable is global or local
@@ -906,7 +906,7 @@ def loadvr(v, reg):
     final_file.flush()
 
 
-def storerv(reg, v):
+def store(reg, v):
     global voffset
 
     # Determine if the variable is global or local
@@ -971,19 +971,19 @@ def create_asm_file(quad, quad_num):
 
     elif quad.op in num_op_cutepy:
         ret_op = num_op_asm[num_op_cutepy.index(quad.op)]
-        loadvr(quad.oprnd1, 't1')
-        loadvr(quad.oprnd2, 't2')
+        load(quad.oprnd1, 't1')
+        load(quad.oprnd2, 't2')
         final_file.write(f'{ret_op} t1, t1, t2 \n')
-        storerv('t1', quad.target)
+        store('t1', quad.target)
 
     elif quad.op == "=":
-        loadvr(quad.oprnd1, 't1')
-        storerv('t1', quad.target)
+        load(quad.oprnd1, 't1')
+        store('t1', quad.target)
 
     elif quad.op in rel_op_cutepy:
         ret_op = rel_op_asm[rel_op_cutepy.index(quad.op)]
-        loadvr(quad.oprnd1, 't1')
-        loadvr(quad.oprnd2, 't2')
+        load(quad.oprnd1, 't1')
+        load(quad.oprnd2, 't2')
         final_file.write(f'{ret_op} t1, t2, L_{int(quad.target) if quad.target != "_" else "_"} \n')
 
     elif quad.op == "in":
@@ -991,7 +991,7 @@ def create_asm_file(quad, quad_num):
         final_file.write('ecall\n')
 
     elif quad.op == "out":
-        loadvr(quad.oprnd1, 'a0')
+        load(quad.oprnd1, 'a0')
         final_file.write('li a1, 1\n')
         final_file.write('ecall \n')
         final_file.write('la a0, str_nl\n')
@@ -999,7 +999,7 @@ def create_asm_file(quad, quad_num):
         final_file.write('ecall \n')
 
     elif quad.op == "ret":
-        loadvr(quad.oprnd1, 't1')
+        load(quad.oprnd1, 't1')
         final_file.write('lw t0, -8(sp)\n')
         final_file.write('sw t1, 0(t0)\n')
 
