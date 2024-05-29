@@ -5,9 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bb37a3fd-3f1f-4924-a933-a77c71216440" name="Changes" comment="v2.0">
-      <change afterPath="$PROJECT_DIR$/symboltable_patch.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lexor_syntax_analyzer.py" beforeDir="false" afterPath="$PROJECT_DIR$/lexor_syntax_analyzer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/symboltable_patch.py" beforeDir="false" afterPath="$PROJECT_DIR$/symboltable_patch.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test.cpy" beforeDir="false" afterPath="$PROJECT_DIR$/test.cpy" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -57,7 +56,7 @@
     "ASKED_ADD_EXTERNAL_FILES": "true",
     "Python.Cimple.executor": "Run",
     "Python.lexor_syntax_analyzer.executor": "Debug",
-    "Python.symboltable_patch.executor": "Debug",
+    "Python.symboltable_patch.executor": "Run",
     "Python.test.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -129,7 +128,7 @@
       <workItem from="1715808679804" duration="7000" />
       <workItem from="1716919109451" duration="137000" />
       <workItem from="1716983496040" duration="7606000" />
-      <workItem from="1716991199680" duration="12976000" />
+      <workItem from="1716991199680" duration="18379000" />
     </task>
     <task id="LOCAL-00001" summary="v1.01">
       <option name="closed" value="true" />
@@ -243,7 +242,15 @@
       <option name="project" value="LOCAL" />
       <updated>1715794723979</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="v2.0">
+      <option name="closed" value="true" />
+      <created>1717004905058</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1717004905058</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -290,11 +297,6 @@
           <line>384</line>
           <option name="timeStamp" value="71" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/symboltable_patch.py</url>
-          <line>267</line>
-          <option name="timeStamp" value="88" />
-        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
     <watches-manager>
@@ -305,10 +307,10 @@
     </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/lexor_syntax_analyzer_py$test.coverage" NAME="test Coverage Results" MODIFIED="1716998763513" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/lexor_syntax_analyzer_py$test.coverage" NAME="test Coverage Results" MODIFIED="1717010022116" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/compiler$lexor_syntax_analyzer.coverage" NAME="lexor_syntax_analyzer Coverage Results" MODIFIED="1715544737290" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
     <SUITE FILE_PATH="coverage/lexor_syntax_analyzer_py$lexor_syntax_analyzer.coverage" NAME="lexor_syntax_analyzer Coverage Results" MODIFIED="1716987980103" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/lexor_syntax_analyzer_py$symboltable_patch.coverage" NAME="symboltable_patch Coverage Results" MODIFIED="1717004750215" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/lexor_syntax_analyzer_py$symboltable_patch.coverage" NAME="symboltable_patch Coverage Results" MODIFIED="1717010286700" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/lexor_syntax_analyzer_py$Cimple.coverage" NAME="Cimple Coverage Results" MODIFIED="1715787868037" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$USER_HOME$/Downloads" />
   </component>
 </project>

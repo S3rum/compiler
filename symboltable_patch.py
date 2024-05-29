@@ -8,6 +8,8 @@ all_quads = {}
 allVariableRecords = []
 voffset = 0
 
+
+
 class Token:
     def __init__(self, family, recognized_string, line_number, token_number):
         self.family = family
@@ -262,7 +264,8 @@ class Lexer:
 
 class SymbolTable:
     def __init__(self):
-        self.scopes = [{}]  # Stack of scopes, each scope is a dictionary of entities
+        self.scopes = [{}]
+        self.global_scope = self.scopes[0]
 
     def enter_scope(self):
         self.scopes.append({})
@@ -274,11 +277,20 @@ class SymbolTable:
             raise Exception("Attempt to pop global scope")
 
     def add_variable(self, name, datatype, is_global=False):
-        variable = Variable(name, datatype, self.current_offset())
+        # Calculate offset based on the scope the variable is being added to
+        offset = self.current_offset(is_global)
+
+        variable = Variable(name, datatype, offset)
         if is_global:
-            self.scopes[0][name] = variable  # Add to global scope
+            self.global_scope[name] = variable  # Add to global scope
         else:
             self.scopes[-1][name] = variable  # Add to current scope
+
+    def current_offset(self, is_global=False):
+        if is_global:
+            return len(self.global_scope) * 4  # Offset within global scope
+        else:
+            return sum(len(scope) * 4 for scope in self.scopes)  # Total offset across all scopes
 
     def add_function(self, name, starting_quad, datatype, formal_parameters, frame_length):
         function = Function(name, starting_quad, datatype, formal_parameters, frame_length)
@@ -290,16 +302,20 @@ class SymbolTable:
                 return scope[name]
         return None
 
-    def current_offset(self):
-        return sum(len(scope) * 4 for scope in self.scopes)
+
 
     def __str__(self):
         result = []
         for i, scope in enumerate(self.scopes):
             result.append(f"Scope {i}:")
-            for entity in scope.values():
-                result.append(str(entity))
+            for name, entity in scope.items():
+                if isinstance(entity, Function):
+                    result.append(f"  {name} : {entity.datatype}")
+                else:
+                    result.append(f"  {name} : {entity.datatype} {entity.offset}")  # Use the stored offset
+
         return "\n".join(result)
+
 
 
 class Parser:
@@ -355,7 +371,7 @@ class Parser:
         if self.get_token().recognized_string != "(":
             self.error("(")
         self.get_token()
-        self.id_list(subprogram_id, is_parameters=True)  # Handle parameters
+        self.id_list(is_parameters=True)
         if self.current_token.recognized_string != ":":
             self.error(":")
         if self.get_token().recognized_string != "#{":
@@ -391,64 +407,48 @@ class Parser:
 
     def globals(self, subprogram_id: str):
         while self.current_token.recognized_string == "global":
-            self.get_token()  # Move past the "global" keyword
-
+            self.get_token()
             if self.next_token.family != "ID":
-                self.error(f"Expected variable name after 'global', but found {self.next_token.family}")
-
+                self.error("ID after global")
             while self.current_token.family == "ID":
                 var_name = self.current_token.recognized_string
-                # Add the variable to the symbol table as a global variable
                 self.symbol_table.add_variable(var_name, "int", is_global=True)
-
-                self.get_token()  # Move to the next token
+                self.get_token()
                 if self.current_token.recognized_string == ",":
-                    self.get_token()  # Move past the comma to the next identifier
+                    self.get_token()
                 else:
                     break
-
-
 
     def declarations(self, subprogram_id: str):
         while self.current_token.recognized_string == "#int":
-            self.get_token()  # Move past the "#int"
-
+            self.get_token()
             if self.current_token.family != "ID":
-                self.error(f"Expected variable name after '#int', but found {self.current_token.recognized_string}")
-
+                self.error("variable name after #int")
             while self.current_token.family == "ID":
                 var_name = self.current_token.recognized_string
-                # Add the variable to the symbol table
-                self.symbol_table.add_variable(var_name, "int")
 
-                self.get_token()  # Move to the next token
+                self.symbol_table.add_variable(var_name, "int")
+                self.get_token()
+
                 if self.current_token.recognized_string == ",":
-                    self.get_token()  # Move past the comma to the next identifier
+                    self.get_token()
                 else:
                     break
 
-    def id_list(self, subprogram_id: str, is_parameters=False):
-        # Ensure the current token is an identifier before proceeding
+    def id_list(self, is_parameters=False):
         if self.current_token.family != "ID":
-            self.error(f"Expected variable name, but found {self.current_token.recognized_string}")
-
+            self.error("variable name")
         while True:
             var_name = self.current_token.recognized_string
-
-            # Add the variable to the symbol table
             self.symbol_table.add_variable(var_name, "int")
-
-            self.get_token()  # Move to the next token
-
+            self.get_token()
             if self.current_token.recognized_string != ",":
                 break
-            self.get_token()  # Move past the comma to the next identifier
-
-        # If handling parameters, expect a closing parenthesis
+            self.get_token()
         if is_parameters:
             if self.current_token.recognized_string != ")":
-                self.error(f"Expected ')', but found {self.current_token.recognized_string}")
-            self.get_token()  # Move past the closing parenthesis
+                self.error(")")
+            self.get_token()
 
     def declaration_line(self):
         self.get_token()
@@ -779,12 +779,12 @@ class Parser:
 
 
 class Entity:
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
 
 
 class Variable(Entity):
-    def __init__(self, name, datatype, offset):
+    def __init__(self, name: str, datatype, offset: int):
         super().__init__(name)
         self.datatype = datatype
         self.offset = offset
@@ -794,17 +794,15 @@ class Variable(Entity):
 
 
 class Function(Entity):
-    def __init__(self, name, starting_quad, datatype, formal_parameters, frame_length):
+    def __init__(self, name: str, starting_quad, datatype, formal_parameters: list, frame_length: int):
         super().__init__(name)
         self.starting_quad = starting_quad
-        self.datatype = datatype
         self.formal_parameters = formal_parameters
-        self.frame_length = frame_length
+        self.framelength = frame_length
+        self.datatype = datatype
 
     def __str__(self):
-        return f"{self.name}, {self.starting_quad}, {self.datatype}, {self.frame_length}"
-
-
+        return f"{self.name}, {self.starting_quad}, {self.datatype}, {self.framelength}"
 
 
 def create_int_file():
@@ -866,7 +864,7 @@ def add_variable_records(name, datatype, offset):
     allVariableRecords.append(record)
 
 
-def loadvr(v, reg):
+def load(v, reg):
     global voffset
 
     for var in allVariableRecords:
@@ -881,7 +879,7 @@ def loadvr(v, reg):
     final_file.flush()
 
 
-def storerv(reg, v):
+def store(reg, v):
     global voffset
 
     for var in allVariableRecords:
@@ -891,13 +889,14 @@ def storerv(reg, v):
 
     final_file.flush()
 
+
 def create_asm_file(quad, quad_num):
     global halt_label
 
-    num_op_cutepy = ('+', '-', '*', '/')
+    num_op = ('+', '-', '*', '/')
     num_op_riscv = ('add', 'sub', 'mul', 'div')
 
-    rel_op_cutepy = ('==', '!=', '<', '>', '<=', '>=')
+    rel_op = ('==', '!=', '<', '>', '<=', '>=')
     rel_op_riscv = ('beq', 'bne', 'blt', 'bge', 'ble', 'bge')
 
     if quad.op == "halt":
@@ -922,31 +921,31 @@ def create_asm_file(quad, quad_num):
     elif quad.op == 'begin_block':
         final_file.write('sw ra, 0(sp)\n')
         final_file.write('addi sp, sp, -4\n')
-        final_file.seek(0, 0)  # Takes the cursor to top line
+        final_file.seek(0, 0)
         final_file.write(".data\n")
         final_file.write("str_nl: .asciz " + '"\\n" \n')
         final_file.write(".text\n")
         final_file.write('j L_{} \n'.format(quad_num))
-        final_file.seek(0, 2)  # Go to the end of the output file
+        final_file.seek(0, 2)
 
     elif quad.op == 'end_block':
         final_file.write('j L_{} \n'.format(halt_label))
 
-    elif quad.op in num_op_cutepy:
-        ret_op = num_op_riscv[num_op_cutepy.index(quad.op)]
-        loadvr(quad.oprnd1, 't1')
-        loadvr(quad.oprnd2, 't2')
+    elif quad.op in num_op:
+        ret_op = num_op_riscv[num_op.index(quad.op)]
+        load(quad.oprnd1, 't1')
+        load(quad.oprnd2, 't2')
         final_file.write(f'{ret_op} t1, t1, t2 \n')
-        storerv('t1', quad.target)
+        store('t1', quad.target)
 
     elif quad.op == "=":
-        loadvr(quad.oprnd1, 't1')
-        storerv('t1', quad.target)
+        load(quad.oprnd1, 't1')
+        store('t1', quad.target)
 
-    elif quad.op in rel_op_cutepy:
-        ret_op = rel_op_riscv[rel_op_cutepy.index(quad.op)]
-        loadvr(quad.oprnd1, 't1')
-        loadvr(quad.oprnd2, 't2')
+    elif quad.op in rel_op:
+        ret_op = rel_op_riscv[rel_op.index(quad.op)]
+        load(quad.oprnd1, 't1')
+        load(quad.oprnd2, 't2')
         final_file.write(f'{ret_op} t1, t2, L_{int(quad.target) if quad.target != "_" else "_"} \n')
 
     elif quad.op == "in":
@@ -954,7 +953,7 @@ def create_asm_file(quad, quad_num):
         final_file.write('ecall\n')
 
     elif quad.op == "out":
-        loadvr(quad.oprnd1, 'a0')
+        load(quad.oprnd1, 'a0')
         final_file.write('li a7, 1\n')
         final_file.write('ecall \n')
         final_file.write('la a0, str_nl\n')
@@ -962,41 +961,16 @@ def create_asm_file(quad, quad_num):
         final_file.write('ecall \n')
 
     elif quad.op == "ret":
-        loadvr(quad.oprnd1, 't1')
+        load(quad.oprnd1, 't1')
         final_file.write('lw t0, -8(sp)\n')
         final_file.write('sw t1, 0(t0)\n')
 
     final_file.flush()
 
-def loadvr(v, reg):
-    global voffset
-
-    for var in allVariableRecords:
-        if var['name'] == v:
-            voffset = var['offset']
-
-    if str(v).isdigit():
-        final_file.write('li {} , {}\n'.format(reg, int(v)))
-    else:
-        final_file.write('lw {} ,{}(sp)\n'.format(reg, -voffset))
-
-    final_file.flush()
-
-def storerv(reg, v):
-    global voffset
-
-    for var in allVariableRecords:
-        if var['name'] == v:
-            voffset = var['offset']
-    final_file.write('sw {} ,{}(sp)\n'.format(reg, -voffset))
-
-    final_file.flush()
-
-
-
 
 def main():
     global final_file
+    global symbol_table
 
     tokens = []
 
@@ -1014,14 +988,13 @@ def main():
         tokens.append(token)
 
     final_file = open("test.asm", "w+")
-    global symbol_table
+
     symbol_table = SymbolTable()
     Parser(lexer,symbol_table)
 
     create_int_file()
     for quad, quad_num in all_quads.items():
         create_asm_file(quad, quad_num + 1)
-
 
 
 if __name__ == "__main__":
