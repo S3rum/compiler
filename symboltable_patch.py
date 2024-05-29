@@ -29,8 +29,8 @@ class Lexer:
         self.current_line = 1
 
     def filepath(self):
-        #filepath = input("Give me the file's path: ")
-        filepath = "C:\\Users\\srig\\Desktop\\Uni\\compiler\\test.cpy"
+        filepath = input("Give me the file's path: ")
+        #filepath = "C:\\Users\\srig\\Desktop\\Uni\\compiler\\test.cpy"
         with open(filepath, "r") as fd:
             return fd.read()  # Read the file contents
 
@@ -931,10 +931,10 @@ def store(reg, v):
 def create_asm_file(quad, quad_num):
     global halt_label
 
-    num_op_cutepy = ('+', '-', '*', '/')
+    num_op = ('+', '-', '*', '/')
     num_op_asm = ('add', 'sub', 'mul', 'div')
 
-    rel_op_cutepy = ('==', '!=', '<', '>', '<=', '>=')
+    rel_op = ('==', '!=', '<', '>', '<=', '>=')
     rel_op_asm = ('beq', 'bne', 'blt', 'bgt', 'ble', 'bge')
 
     if quad.op == "halt":
@@ -969,8 +969,8 @@ def create_asm_file(quad, quad_num):
     elif quad.op == 'end_block':
         final_file.write('j L_{} \n'.format(halt_label))
 
-    elif quad.op in num_op_cutepy:
-        ret_op = num_op_asm[num_op_cutepy.index(quad.op)]
+    elif quad.op in num_op:
+        ret_op = num_op_asm[num_op.index(quad.op)]
         load(quad.oprnd1, 't1')
         load(quad.oprnd2, 't2')
         final_file.write(f'{ret_op} t1, t1, t2 \n')
@@ -980,8 +980,8 @@ def create_asm_file(quad, quad_num):
         load(quad.oprnd1, 't1')
         store('t1', quad.target)
 
-    elif quad.op in rel_op_cutepy:
-        ret_op = rel_op_asm[rel_op_cutepy.index(quad.op)]
+    elif quad.op in rel_op:
+        ret_op = rel_op_asm[rel_op.index(quad.op)]
         load(quad.oprnd1, 't1')
         load(quad.oprnd2, 't2')
         final_file.write(f'{ret_op} t1, t2, L_{int(quad.target) if quad.target != "_" else "_"} \n')
