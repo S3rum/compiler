@@ -276,25 +276,30 @@ class SymbolTable:
         else:
             raise Exception("Attempt to pop global scope")
 
-    def add_variable(self, name, datatype, is_global=False):
-        # Calculate offset based on the scope the variable is being added to
-        offset = self.current_offset(is_global)
-
+    def add_variable(self, name, datatype, current_scope, is_global=False):
+        offset = self.current_offset(current_scope, is_global)  # Use current_scope
         variable = Variable(name, datatype, offset)
-        if is_global:
-            self.global_scope[name] = variable  # Add to global scope
-        else:
-            self.scopes[-1][name] = variable  # Add to current scope
 
-    def current_offset(self, is_global=False):
         if is_global:
-            return len(self.global_scope) * 4  # Offset within global scope
+            self.global_scope[name] = variable
         else:
-            return sum(len(scope) * 4 for scope in self.scopes)  # Total offset across all scopes
+            self.scopes[current_scope][name] = variable  # Use current_scope
 
-    def add_function(self, name, starting_quad, datatype, formal_parameters, frame_length):
-        function = Function(name, starting_quad, datatype, formal_parameters, frame_length)
-        self.scopes[-1][name] = function
+    def current_offset(self, current_scope, is_global=False):
+        if is_global:
+            return len(self.global_scope) * 4
+        else:
+            return sum(len(scope) * 4 for scope in self.scopes[:current_scope+1])  # Sum up to the current scope
+
+    def add_function(self, name, starting_quad, datatype, formal_parameters, frame_length, scope):
+        # Calculate the offset for the function entry.
+        offset = self.current_offset(scope, is_global=False)  # Functions are not global
+
+        function = Function(name, starting_quad, datatype, formal_parameters, frame_length, offset)
+        if scope == 0:
+            self.global_scope[name] = function
+        else:
+            self.scopes[scope][name] = function
 
     def lookup(self, name):
         for scope in reversed(self.scopes):
@@ -306,25 +311,25 @@ class SymbolTable:
 
     def __str__(self):
         result = []
+
         for i, scope in enumerate(self.scopes):
             result.append(f"Scope {i}:")
             for name, entity in scope.items():
-                if isinstance(entity, Function):
-                    result.append(f"  {name} : {entity.datatype}")
-                else:
-                    result.append(f"  {name} : {entity.datatype} {entity.offset}")  # Use the stored offset
-
+                result.append(f"  {name} : {entity.datatype} {getattr(entity, 'offset', '')}")
         return "\n".join(result)
 
 
 
 class Parser:
+
     def __init__(self, lexer, symbolTable):
+        self.current_scope = 0
         self.lexer = lexer
         self.current_token = self.lexer.lexical_analyzer()
         self.next_token = self.lexer.lexical_analyzer()
         self.symbol_table = symbolTable  # Instantiate symbol table
         self.looper()
+        self.current_scope = 0
 
     def program(self):
         global program_name
@@ -351,10 +356,13 @@ class Parser:
                 self.error("main")
             self.get_token()
             self.symbol_table.enter_scope()  # Enter a new scope for the main function
-            self.declarations(subprogram_id)
-            self.globals(subprogram_id)
+            self.current_scope = 1
+            self.declarations(0)
+            self.globals(0)
             self.statements(subprogram_id)
-            self.symbol_table.exit_scope()  # Exit the main function scope
+            self.symbol_table.exit_scope()
+            self.current_scope = 0
+    # Exit the main function scope
 
     def def_function(self, subprogram_id: str):
         global current_subprogram
@@ -371,23 +379,26 @@ class Parser:
         if self.get_token().recognized_string != "(":
             self.error("(")
         self.get_token()
-        self.id_list(is_parameters=True)
+        self.id_list(self.current_scope,is_parameters=True)
         if self.current_token.recognized_string != ":":
             self.error(":")
         if self.get_token().recognized_string != "#{":
             self.error("#{")
         self.get_token()
-        self.globals(subprogram_id)
-        self.declarations(subprogram_id)
+        self.current_scope += 1
+        self.globals(self.current_scope)
+        self.declarations(self.current_scope)
 
-        self.symbol_table.add_function(subprogram_id, next_quad(), "int", [], 12)
+        self.symbol_table.add_function(subprogram_id, next_quad(), "int", [], 12, self.current_scope - 1)
         gen_quad("begin_block", subprogram_id, '_', '_')
 
         while True:
             if self.current_token.recognized_string == "#int":
                 self.declarations(subprogram_id)
             if self.current_token.recognized_string == "def":
+                
                 self.def_function(subprogram_id)
+
             if self.current_token.recognized_string == "global":
                 self.globals(subprogram_id)
             if self.current_token.family == "ID":
@@ -399,35 +410,41 @@ class Parser:
         gen_quad('end_block', subprogram_id, '_', '_')
 
         self.symbol_table.exit_scope()  # Exit the function scope
-
+        self.current_scope -= 1
         if self.current_token.recognized_string != "#}":
             self.error("#}")
         if self.current_token.recognized_string == "#}":
             self.get_token()
 
-    def globals(self, subprogram_id: str):
+    def globals(self, current_scope):
         while self.current_token.recognized_string == "global":
-            self.get_token()
+            self.get_token()  # Move past the "global" keyword
+
             if self.next_token.family != "ID":
                 self.error("ID after global")
+
             while self.current_token.family == "ID":
                 var_name = self.current_token.recognized_string
-                self.symbol_table.add_variable(var_name, "int", is_global=True)
+                # Explicitly add global variables to the global scope (scope 0)
+                self.symbol_table.add_variable(var_name, "int", current_scope=0, is_global=True)
                 self.get_token()
+
                 if self.current_token.recognized_string == ",":
                     self.get_token()
                 else:
                     break
 
-    def declarations(self, subprogram_id: str):
+    def declarations(self, current_scope):
         while self.current_token.recognized_string == "#int":
             self.get_token()
+
             if self.current_token.family != "ID":
                 self.error("variable name after #int")
+
             while self.current_token.family == "ID":
                 var_name = self.current_token.recognized_string
-
-                self.symbol_table.add_variable(var_name, "int")
+                # Add local variables to the current scope
+                self.symbol_table.add_variable(var_name, "int", current_scope=current_scope)
                 self.get_token()
 
                 if self.current_token.recognized_string == ",":
@@ -435,20 +452,22 @@ class Parser:
                 else:
                     break
 
-    def id_list(self, is_parameters=False):
+    def id_list(self, current_scope, is_parameters=False):  # Add current_scope argument
         if self.current_token.family != "ID":
             self.error("variable name")
         while True:
             var_name = self.current_token.recognized_string
-            self.symbol_table.add_variable(var_name, "int")
+            self.symbol_table.add_variable(var_name, "int", current_scope)  # Pass current_scope
             self.get_token()
             if self.current_token.recognized_string != ",":
                 break
             self.get_token()
+
         if is_parameters:
             if self.current_token.recognized_string != ")":
                 self.error(")")
-            self.get_token()
+            self.get_token()  # Consume the closing parenthesis
+
 
     def declaration_line(self):
         self.get_token()
@@ -794,12 +813,13 @@ class Variable(Entity):
 
 
 class Function(Entity):
-    def __init__(self, name: str, starting_quad, datatype, formal_parameters: list, frame_length: int):
+    def __init__(self, name: str, starting_quad, datatype, formal_parameters: list, frame_length: int, offset: int):
         super().__init__(name)
         self.starting_quad = starting_quad
         self.formal_parameters = formal_parameters
         self.framelength = frame_length
         self.datatype = datatype
+        self.offset = offset
 
     def __str__(self):
         return f"{self.name}, {self.starting_quad}, {self.datatype}, {self.framelength}"
@@ -864,40 +884,58 @@ def add_variable_records(name, datatype, offset):
     allVariableRecords.append(record)
 
 
-def load(v, reg):
+def loadvr(v, reg):
     global voffset
 
+    # Determine if the variable is global or local
+    is_global = False
     for var in allVariableRecords:
         if var['name'] == v:
             voffset = var['offset']
+            is_global = var['offset'] >= 0  # Assume global variables have non-negative offsets
 
     if str(v).isdigit():
-        final_file.write('li {} , {}\n'.format(reg, int(v)))
+        final_file.write('li {}, {}\n'.format(reg, int(v)))
+    elif is_global:
+        # Load from global variable address
+        final_file.write('lw {}, {}(t0)\n'.format(reg, voffset))  # Assume t0 is the base register for globals
     else:
-        final_file.write('lw {} ,{}($gp)\n'.format(reg, -voffset))
+        # Load from local variable address
+        final_file.write('lw {}, {}(sp)\n'.format(reg, -voffset))
 
     final_file.flush()
 
 
-def store(reg, v):
+def storerv(reg, v):
     global voffset
 
+    # Determine if the variable is global or local
+    is_global = False
     for var in allVariableRecords:
         if var['name'] == v:
             voffset = var['offset']
-    final_file.write('sw {} ,{}($gp)\n'.format(reg, -voffset))
+            is_global = var['offset'] >= 0  # Assume global variables have non-negative offsets
+
+    if is_global:
+        # Store to global variable address
+        final_file.write('sw {}, {}(t0)\n'.format(reg, voffset))  # Assume t0 is the base register for globals
+    else:
+        # Store to local variable address
+        final_file.write('sw {}, {}(sp)\n'.format(reg, -voffset))
 
     final_file.flush()
+
+
 
 
 def create_asm_file(quad, quad_num):
     global halt_label
 
-    num_op = ('+', '-', '*', '/')
-    num_op_riscv = ('add', 'sub', 'mul', 'div')
+    num_op_cutepy = ('+', '-', '*', '/')
+    num_op_asm = ('add', 'sub', 'mul', 'div')
 
-    rel_op = ('==', '!=', '<', '>', '<=', '>=')
-    rel_op_riscv = ('beq', 'bne', 'blt', 'bge', 'ble', 'bge')
+    rel_op_cutepy = ('==', '!=', '<', '>', '<=', '>=')
+    rel_op_asm = ('beq', 'bne', 'blt', 'bgt', 'ble', 'bge')
 
     if quad.op == "halt":
         halt_label = quad_num
@@ -915,53 +953,53 @@ def create_asm_file(quad, quad_num):
 
     elif quad.op == "halt":
         final_file.write("li a0, 0 \n")
-        final_file.write("li a7, 10 \n")
+        final_file.write("li a1, 10 \n")
         final_file.write("ecall \n")
 
     elif quad.op == 'begin_block':
         final_file.write('sw ra, 0(sp)\n')
-        final_file.write('addi sp, sp, -4\n')
-        final_file.seek(0, 0)
+        final_file.seek(0, 0)  # Takes the cursor to top line
         final_file.write(".data\n")
         final_file.write("str_nl: .asciz " + '"\\n" \n')
         final_file.write(".text\n")
         final_file.write('j L_{} \n'.format(quad_num))
-        final_file.seek(0, 2)
+        final_file.seek(0, 2)  # Go to the end of the output file
+        final_file.write('mv gp, sp\n')
 
     elif quad.op == 'end_block':
         final_file.write('j L_{} \n'.format(halt_label))
 
-    elif quad.op in num_op:
-        ret_op = num_op_riscv[num_op.index(quad.op)]
-        load(quad.oprnd1, 't1')
-        load(quad.oprnd2, 't2')
+    elif quad.op in num_op_cutepy:
+        ret_op = num_op_asm[num_op_cutepy.index(quad.op)]
+        loadvr(quad.oprnd1, 't1')
+        loadvr(quad.oprnd2, 't2')
         final_file.write(f'{ret_op} t1, t1, t2 \n')
-        store('t1', quad.target)
+        storerv('t1', quad.target)
 
     elif quad.op == "=":
-        load(quad.oprnd1, 't1')
-        store('t1', quad.target)
+        loadvr(quad.oprnd1, 't1')
+        storerv('t1', quad.target)
 
-    elif quad.op in rel_op:
-        ret_op = rel_op_riscv[rel_op.index(quad.op)]
-        load(quad.oprnd1, 't1')
-        load(quad.oprnd2, 't2')
+    elif quad.op in rel_op_cutepy:
+        ret_op = rel_op_asm[rel_op_cutepy.index(quad.op)]
+        loadvr(quad.oprnd1, 't1')
+        loadvr(quad.oprnd2, 't2')
         final_file.write(f'{ret_op} t1, t2, L_{int(quad.target) if quad.target != "_" else "_"} \n')
 
     elif quad.op == "in":
-        final_file.write('li a7, 5\n')
+        final_file.write('li a1, 5\n')
         final_file.write('ecall\n')
 
     elif quad.op == "out":
-        load(quad.oprnd1, 'a0')
-        final_file.write('li a7, 1\n')
+        loadvr(quad.oprnd1, 'a0')
+        final_file.write('li a1, 1\n')
         final_file.write('ecall \n')
         final_file.write('la a0, str_nl\n')
-        final_file.write('li a7, 4\n')
+        final_file.write('li a1, 4\n')
         final_file.write('ecall \n')
 
     elif quad.op == "ret":
-        load(quad.oprnd1, 't1')
+        loadvr(quad.oprnd1, 't1')
         final_file.write('lw t0, -8(sp)\n')
         final_file.write('sw t1, 0(t0)\n')
 
@@ -994,7 +1032,7 @@ def main():
 
     create_int_file()
     for quad, quad_num in all_quads.items():
-        create_asm_file(quad, quad_num + 1)
+        create_asm_file(quad,quad_num)
 
 
 if __name__ == "__main__":
